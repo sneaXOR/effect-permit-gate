@@ -1,276 +1,541 @@
 {
-  "runtime": "OpenAI Agents SDK",
-  "runtime_version": "0.22.2",
-  "python": "3.12.14",
-  "platform": "Windows-11-10.0.26200-SP0",
-  "claim": "A final guardrail tripwire does not imply that external side effects were prevented; prevention depends on boundary placement and execution mode.",
-  "cases": [
-    {
-      "mode": "agent_parallel",
-      "calls_requested": 1,
-      "guard_delay_ms": 50,
-      "effects_committed": 1,
-      "effect_times_ms": [
-        294.414
-      ],
-      "final_exception": "InputGuardrailTripwireTriggered",
-      "model_calls": 1
+  "claim": "Moving authorization proof to the effect service blocks mutated, replayed, expired, forged, and stale actions that an effect service trusting a faulty or compromised host accepts.",
+  "policy": "purchasing-agent may pay approved-vendor at most 1000 EUR",
+  "modes": {
+    "trust-adapter": [
+      {
+        "case": "approved_action_via_agent_runtime",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 1,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 1,
+        "passed": true
+      },
+      {
+        "case": "missing_permit",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 2,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 0,
+        "passed": false
+      },
+      {
+        "case": "arguments_changed_via_agent_runtime",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 0,
+        "passed": false
+      },
+      {
+        "case": "sequential_retry",
+        "statuses": [
+          200,
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 4,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 5,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 2,
+        "allowed_commits": 1,
+        "passed": false
+      },
+      {
+        "case": "concurrent_retry_16x_via_agent_runtime",
+        "statuses": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 8,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 6,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 7,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 13,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 9,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 11,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 10,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 12,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 14,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 15,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 16,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 17,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 18,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 19,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 20,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 21,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 16,
+        "allowed_commits": 1,
+        "passed": false
+      },
+      {
+        "case": "expired_permit",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 22,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 0,
+        "passed": false
+      },
+      {
+        "case": "forged_permit",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 23,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 0,
+        "passed": false
+      },
+      {
+        "case": "wrong_principal_label",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 24,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 0,
+        "passed": false
+      },
+      {
+        "case": "wrong_tool_version",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 25,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 0,
+        "passed": false
+      },
+      {
+        "case": "stale_policy_revision",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 1,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 0,
+        "passed": false
+      }
+    ],
+    "permit": [
+      {
+        "case": "approved_action_via_agent_runtime",
+        "statuses": [
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 1,
+            "replayed": false
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 1,
+        "passed": true
+      },
+      {
+        "case": "missing_permit",
+        "statuses": [
+          403
+        ],
+        "responses": [
+          {
+            "committed": false,
+            "reason": "invalid_signature"
+          }
+        ],
+        "effects_committed": 0,
+        "allowed_commits": 0,
+        "passed": true
+      },
+      {
+        "case": "arguments_changed_via_agent_runtime",
+        "statuses": [
+          403
+        ],
+        "responses": [
+          {
+            "committed": false,
+            "reason": "arguments_mismatch"
+          }
+        ],
+        "effects_committed": 0,
+        "allowed_commits": 0,
+        "passed": true
+      },
+      {
+        "case": "sequential_retry",
+        "statuses": [
+          200,
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 2,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 2,
+            "replayed": true
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 1,
+        "passed": true
+      },
+      {
+        "case": "concurrent_retry_16x_via_agent_runtime",
+        "statuses": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          200
+        ],
+        "responses": [
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          },
+          {
+            "committed": true,
+            "effect_id": 3,
+            "replayed": true
+          }
+        ],
+        "effects_committed": 1,
+        "allowed_commits": 1,
+        "passed": true
+      },
+      {
+        "case": "expired_permit",
+        "statuses": [
+          403
+        ],
+        "responses": [
+          {
+            "committed": false,
+            "reason": "expired"
+          }
+        ],
+        "effects_committed": 0,
+        "allowed_commits": 0,
+        "passed": true
+      },
+      {
+        "case": "forged_permit",
+        "statuses": [
+          403
+        ],
+        "responses": [
+          {
+            "committed": false,
+            "reason": "invalid_signature"
+          }
+        ],
+        "effects_committed": 0,
+        "allowed_commits": 0,
+        "passed": true
+      },
+      {
+        "case": "wrong_principal_label",
+        "statuses": [
+          403
+        ],
+        "responses": [
+          {
+            "committed": false,
+            "reason": "principal_mismatch"
+          }
+        ],
+        "effects_committed": 0,
+        "allowed_commits": 0,
+        "passed": true
+      },
+      {
+        "case": "wrong_tool_version",
+        "statuses": [
+          403
+        ],
+        "responses": [
+          {
+            "committed": false,
+            "reason": "tool_version_mismatch"
+          }
+        ],
+        "effects_committed": 0,
+        "allowed_commits": 0,
+        "passed": true
+      },
+      {
+        "case": "stale_policy_revision",
+        "statuses": [
+          403
+        ],
+        "responses": [
+          {
+            "committed": false,
+            "reason": "stale_policy"
+          }
+        ],
+        "effects_committed": 0,
+        "allowed_commits": 0,
+        "passed": true
+      }
+    ]
+  },
+  "summary": {
+    "trust-adapter": {
+      "cases_passed": 1,
+      "cases_total": 10,
+      "effects_committed": 26,
+      "unauthorized_or_duplicate_effects": 23
     },
-    {
-      "mode": "agent_blocking",
-      "calls_requested": 1,
-      "guard_delay_ms": 50,
-      "effects_committed": 0,
-      "effect_times_ms": [],
-      "final_exception": "InputGuardrailTripwireTriggered",
-      "model_calls": 0
-    },
-    {
-      "mode": "tool_input",
-      "calls_requested": 1,
-      "guard_delay_ms": 50,
-      "effects_committed": 0,
-      "effect_times_ms": [],
-      "final_exception": "ToolInputGuardrailTripwireTriggered",
-      "model_calls": 1
-    },
-    {
-      "mode": "tool_output",
-      "calls_requested": 1,
-      "guard_delay_ms": 50,
-      "effects_committed": 1,
-      "effect_times_ms": [
-        260.02
-      ],
-      "final_exception": "ToolOutputGuardrailTripwireTriggered",
-      "model_calls": 1
-    },
-    {
-      "mode": "agent_parallel",
-      "calls_requested": 4,
-      "guard_delay_ms": 50,
-      "effects_committed": 4,
-      "effect_times_ms": [
-        254.492,
-        255.492,
-        255.492,
-        256.493
-      ],
-      "final_exception": "InputGuardrailTripwireTriggered",
-      "model_calls": 1
-    },
-    {
-      "mode": "agent_blocking",
-      "calls_requested": 4,
-      "guard_delay_ms": 50,
-      "effects_committed": 0,
-      "effect_times_ms": [],
-      "final_exception": "InputGuardrailTripwireTriggered",
-      "model_calls": 0
-    },
-    {
-      "mode": "tool_input",
-      "calls_requested": 4,
-      "guard_delay_ms": 50,
-      "effects_committed": 0,
-      "effect_times_ms": [],
-      "final_exception": "ToolInputGuardrailTripwireTriggered",
-      "model_calls": 1
-    },
-    {
-      "mode": "tool_output",
-      "calls_requested": 4,
-      "guard_delay_ms": 50,
-      "effects_committed": 4,
-      "effect_times_ms": [
-        256.747,
-        257.747,
-        257.747,
-        257.747
-      ],
-      "final_exception": "ToolOutputGuardrailTripwireTriggered",
-      "model_calls": 1
-    },
-    {
-      "mode": "agent_parallel",
-      "calls_requested": 16,
-      "guard_delay_ms": 50,
-      "effects_committed": 16,
-      "effect_times_ms": [
-        261.629,
-        261.629,
-        262.646,
-        262.646,
-        262.646,
-        263.782,
-        263.782,
-        263.782,
-        264.789,
-        265.788,
-        266.295,
-        266.295,
-        267.301,
-        267.301,
-        267.301,
-        268.308
-      ],
-      "final_exception": "InputGuardrailTripwireTriggered",
-      "model_calls": 1
-    },
-    {
-      "mode": "agent_blocking",
-      "calls_requested": 16,
-      "guard_delay_ms": 50,
-      "effects_committed": 0,
-      "effect_times_ms": [],
-      "final_exception": "InputGuardrailTripwireTriggered",
-      "model_calls": 0
-    },
-    {
-      "mode": "tool_input",
-      "calls_requested": 16,
-      "guard_delay_ms": 50,
-      "effects_committed": 0,
-      "effect_times_ms": [],
-      "final_exception": "ToolInputGuardrailTripwireTriggered",
-      "model_calls": 1
-    },
-    {
-      "mode": "tool_output",
-      "calls_requested": 16,
-      "guard_delay_ms": 50,
-      "effects_committed": 7,
-      "effect_times_ms": [
-        263.554,
-        263.554,
-        264.562,
-        264.562,
-        265.594,
-        265.594,
-        265.594
-      ],
-      "final_exception": "ToolOutputGuardrailTripwireTriggered",
-      "model_calls": 1
+    "permit": {
+      "cases_passed": 10,
+      "cases_total": 10,
+      "effects_committed": 3,
+      "unauthorized_or_duplicate_effects": 0
     }
-  ],
-  "delay_sweep": [
-    {
-      "guard_delay_ms": 0,
-      "runs": 10,
-      "runs_with_effect": 0,
-      "effects_committed": 0
+  },
+  "allowed_path_latency": {
+    "trust-adapter": {
+      "runs": 40,
+      "median_ms": 15.728,
+      "p95_ms": 18.307
     },
-    {
-      "guard_delay_ms": 1,
-      "runs": 10,
-      "runs_with_effect": 0,
-      "effects_committed": 0
-    },
-    {
-      "guard_delay_ms": 5,
-      "runs": 10,
-      "runs_with_effect": 0,
-      "effects_committed": 0
-    },
-    {
-      "guard_delay_ms": 10,
-      "runs": 10,
-      "runs_with_effect": 0,
-      "effects_committed": 0
-    },
-    {
-      "guard_delay_ms": 20,
-      "runs": 10,
-      "runs_with_effect": 8,
-      "effects_committed": 8
-    },
-    {
-      "guard_delay_ms": 50,
-      "runs": 10,
-      "runs_with_effect": 10,
-      "effects_committed": 10
+    "permit": {
+      "runs": 40,
+      "median_ms": 16.879,
+      "p95_ms": 19.133
     }
-  ],
-  "fanout_repetitions": [
-    {
-      "mode": "agent_parallel",
-      "calls_requested_per_run": 16,
-      "guard_delay_ms": 50,
-      "runs": 10,
-      "committed_per_run": [
-        9,
-        14,
-        11,
-        16,
-        14,
-        11,
-        11,
-        16,
-        13,
-        13
-      ],
-      "min_committed": 9,
-      "max_committed": 16
-    },
-    {
-      "mode": "agent_blocking",
-      "calls_requested_per_run": 16,
-      "guard_delay_ms": 50,
-      "runs": 10,
-      "committed_per_run": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "min_committed": 0,
-      "max_committed": 0
-    },
-    {
-      "mode": "tool_input",
-      "calls_requested_per_run": 16,
-      "guard_delay_ms": 50,
-      "runs": 10,
-      "committed_per_run": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "min_committed": 0,
-      "max_committed": 0
-    },
-    {
-      "mode": "tool_output",
-      "calls_requested_per_run": 16,
-      "guard_delay_ms": 50,
-      "runs": 10,
-      "committed_per_run": [
-        11,
-        10,
-        8,
-        7,
-        7,
-        9,
-        9,
-        8,
-        9,
-        9
-      ],
-      "min_committed": 7,
-      "max_committed": 11
-    }
-  ]
+  }
 }

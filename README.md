@@ -1,46 +1,61 @@
-# Runtime Boundary Matrix
+# One approval, one exact effect
 
-An executable safety case for a question that agent-control products cannot answer from the final status alone: **did the guard stop the run before an external action, or only report failure afterward?**
+An AI agent gets approval to pay **€100**, then a faulty or compromised host changes the amount, reuses the approval, or sends it 16 times at once. The baseline tool service trusts the host that called it. This reference gate makes the tool service verify the approval itself before it changes state.
 
-This uses the real OpenAI Agents SDK runtime (`openai-agents==0.22.2`) with its provider-neutral `ScriptedModel`; no API call or model judgment is involved. A function tool commits HTTP writes to a separate local process, while the same rejecting rule is placed at four supported boundaries.
+The approval is a signed, single-effect permit that binds a principal label, destination service, tool version, arguments, policy revision, and expiry time. Change any of them and the action is refused. Retry the identical action and the service returns the original effect reference without paying twice. The principal label is a signed claim, not proof of a human or workload identity.
 
-## Observed result
+## Result
 
-With 16 tool calls and a rejecting check delayed by 50 ms:
+The same ten control and attack cases ran against both designs:
 
-| Check placement | One-call proof | 16-call range across 10 runs |
+| Design | Attack classes reaching a bad effect | 16 concurrent attempts |
 |---|---:|---:|
-| Agent input, parallel | 1 write, then tripwire | 9–16 writes |
-| Agent input, blocking | 0 writes, tripwire | 0 writes |
-| Tool input | 0 writes, tripwire | 0 writes |
-| Tool output | 1 write, then tripwire | 7–11 writes |
+| Effect service trusts a faulty/compromised adapter | 9/9 | 16 effects |
+| Effect service verifies the permit | 0/9 | 1 effect |
 
-The checked-in canonical JSON contains all 112 runs: the deterministic one-call proof, fan-out cases, ten repeated 16-call runs per placement, and a ten-run delay sweep. Exact partial-commit counts and the observed timing threshold are machine-dependent; the stable boundary result is that late rejection can coexist with out-of-process commits recorded before cleanup, whereas pre-tool blocking produced none.
+The raw matrix records 23 unauthorized or duplicate effects in the trust-adapter baseline and zero behind the gate. That total is not the headline and is not a prevalence estimate: 15 come from the deliberately chosen 16-way retry. The invariant result is that all nine attack classes reached a bad effect in the baseline and none did behind the gate.
 
-A failed final status is therefore not evidence that side effects were prevented. The check must complete before the tool boundary when prevention is the required property.
+The three legitimate effects still complete: the original approved action, one sequential retry, and one winner from the 16-way concurrent retry. Identical retries receive the same `effect_id`; the transport metadata differs, but no second effect is created.
 
-## Why this is relevant to AgentWarden
+The canonical JSON also records median and p95 latency for 40 allowed actions in each design. These single-host timings expose the cost; they are not a universal overhead claim.
 
-AgentWarden documents four runtime intervention points—prompt, tool request, tool output, and final response—and leaves orchestration and enforcement to the host application. This harness is not a test of AgentWarden. It is a small adapter-level regression contract for the consequence of that architecture: a policy decision only prevents an action when the host binds it to the pre-action boundary.
+## What runs
 
-For an integration test, the pass condition is deliberately boring: every rejecting pre-tool case records zero sink writes, including under fan-out. A red final status alone is not a pass condition.
+Three request-level boundaries participate:
+
+1. `policy_service.py` decides whether the proposed payment is allowed and signs a permit. Its private key never enters the agent process.
+2. `agent_adapter.py` runs the real OpenAI Agents SDK with its deterministic `ScriptedModel`, obtains the opaque permit, and forwards the action.
+3. `effect_service.py` recalculates the request fingerprint, verifies the signature and policy lineage, and atomically stores both the used nonce and the effect in SQLite.
+
+`attack_matrix.py` acts as a faulty or hostile adapter with request access but no ability to reconfigure the policy or effect services. The approved control, changed-amount attack, and 16-way concurrent retry traverse the real OpenAI Agents SDK. The remaining cases call the protocol boundaries directly. This is a conformance experiment, not an SDK vulnerability test.
 
 ## Run
 
 ```bash
 python -m pip install -r requirements.txt
-python boundary_matrix.py --output results/canonical.json
+python attack_matrix.py --output results/canonical.json
 python -m unittest -v
 ```
 
+No model API or API key is used.
+
+## Why this is relevant to agent security
+
+Dynamo AgentWarden documents that the host application owns the agent loop and enforces returned policy decisions. Its public SDK shape passes a structured tool request separately from the function that performs the action. This experiment tests a stricter adapter contract: the remote system that creates the effect accepts only the exact action that policy approved.
+
+This is not a test of AgentWarden and does not report a Dynamo vulnerability. Signed capabilities, request binding, and idempotency are established security patterns. The contribution is the small executable contract and its adversarial regression matrix for an agent tool boundary.
+
 ## Claim ceiling
 
-The experiment measures boundary semantics in OpenAI Agents SDK 0.22.2. It does not test Dynamo AI or AgentWarden and does not report a vulnerability: the SDK documentation explicitly warns that parallel input guardrails may allow tool execution before cancellation, and that tool-output guardrails run after the tool.
+This repository demonstrates that, inside the included process and SQLite model, effect-side verification prevents the tested substitution, bypass, stale-policy, forgery, expiry, and duplicate-effect cases while preserving identical retries.
 
-The value of the harness is operational: it turns those semantics into an executable regression matrix that an agent-security adapter can be required to pass before deployment.
+It does not provide exactly-once guarantees for arbitrary external systems. A production integration must either commit the business effect and idempotency record in one transaction or pass the same idempotency key to a system that can. Key rotation and cryptographic workload identity are outside this prototype.
 
 ## Sources
 
-- OpenAI Agents SDK guardrails: https://openai.github.io/openai-agents-python/guardrails/
-- Tool execution and concurrency: https://openai.github.io/openai-agents-python/running_agents/
-- Dynamo AgentWarden runtime boundaries: https://docs.dynamo.ai/docs/AgentWarden/How-AgentWarden-Works/
+- Dynamo AgentWarden SDK: https://docs.dynamo.ai/docs/AgentWarden/SDK/
+- Dynamo AgentWarden runtime model: https://docs.dynamo.ai/docs/AgentWarden/How-AgentWarden-Works/
+- OAuth DPoP replay and request binding: https://www.rfc-editor.org/rfc/rfc9449.html
+- OAuth Rich Authorization Requests: https://www.rfc-editor.org/rfc/rfc9396.html
+- Macaroons: https://research.google/pubs/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/
+- Idempotent API design: https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/
