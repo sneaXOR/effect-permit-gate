@@ -25,49 +25,69 @@ def free_port() -> int:
         return reservation.getsockname()[1]
 
 
-def wait_ready(url: str) -> None:
-    for _ in range(100):
+def wait_ready(url: str, process: subprocess.Popen) -> None:
+    for _ in range(50):
+        if process.poll() is not None:
+            error = process.stderr.read().strip() if process.stderr else ""
+            raise RuntimeError(f"service exited during startup: {error}")
         try:
-            if http_json("GET", url)[0] == 200:
+            if http_json("GET", url, timeout=0.1)[0] == 200:
                 return
         except Exception:
-            time.sleep(0.01)
+            time.sleep(0.02)
     raise RuntimeError(f"service did not start: {url}")
+
+
+def start_service(command_for_port) -> tuple[int, subprocess.Popen]:
+    errors = []
+    for _ in range(5):
+        port = free_port()
+        process = subprocess.Popen(
+            command_for_port(port),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            wait_ready(f"http://127.0.0.1:{port}/ready", process)
+            return port, process
+        except RuntimeError as exc:
+            errors.append(str(exc))
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=3)
+            if process.stderr:
+                process.stderr.close()
+    raise RuntimeError("could not start service after five attempts: " + " | ".join(errors))
 
 
 class Lab:
     def __init__(self, mode: str, revision: str = REVISION):
         self.mode = mode
         self.temp = tempfile.TemporaryDirectory(prefix="effect-permit-", ignore_cleanup_errors=True)
-        self.policy_port = free_port()
-        self.policy = subprocess.Popen(
-            [sys.executable, str(Path(__file__).with_name("policy_service.py")), "--port", str(self.policy_port), "--revision", REVISION, "--audience", AUDIENCE],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+        self.policy_port, self.policy = start_service(
+            lambda port: [sys.executable, str(Path(__file__).with_name("policy_service.py")), "--port", str(port), "--revision", REVISION, "--audience", AUDIENCE]
         )
-        wait_ready(f"http://127.0.0.1:{self.policy_port}/ready")
         _, key = http_json("GET", f"http://127.0.0.1:{self.policy_port}/public-key")
-        self.effect_port = free_port()
-        self.effect = subprocess.Popen(
-            [
+        self.effect_port, self.effect = start_service(
+            lambda port: [
                 sys.executable,
                 str(Path(__file__).with_name("effect_service.py")),
-                "--port", str(self.effect_port),
+                "--port", str(port),
                 "--database", str(Path(self.temp.name) / "effects.sqlite"),
                 "--mode", mode,
                 "--public-key", key["public_key"],
                 "--revision", revision,
                 "--audience", AUDIENCE,
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            ]
         )
-        wait_ready(f"http://127.0.0.1:{self.effect_port}/ready")
 
     def close(self) -> None:
         for process in (self.effect, self.policy):
             process.terminate()
             process.wait(timeout=3)
+            if process.stderr:
+                process.stderr.close()
         self.temp.cleanup()
 
     def authorize(self, arguments: dict = SAFE_ARGS, ttl_ms: int = 5000) -> tuple[int, dict]:

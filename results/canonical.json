@@ -111,7 +111,7 @@
           },
           {
             "committed": true,
-            "effect_id": 13,
+            "effect_id": 14,
             "replayed": false
           },
           {
@@ -136,7 +136,7 @@
           },
           {
             "committed": true,
-            "effect_id": 14,
+            "effect_id": 13,
             "replayed": false
           },
           {
@@ -156,22 +156,22 @@
           },
           {
             "committed": true,
-            "effect_id": 18,
-            "replayed": false
-          },
-          {
-            "committed": true,
             "effect_id": 19,
             "replayed": false
           },
           {
             "committed": true,
-            "effect_id": 20,
+            "effect_id": 18,
             "replayed": false
           },
           {
             "committed": true,
             "effect_id": 21,
+            "replayed": false
+          },
+          {
+            "committed": true,
+            "effect_id": 20,
             "replayed": false
           }
         ],
@@ -529,13 +529,13 @@
   "allowed_path_latency": {
     "trust-adapter": {
       "runs": 40,
-      "median_ms": 15.728,
-      "p95_ms": 18.307
+      "median_ms": 15.353,
+      "p95_ms": 20.092
     },
     "permit": {
       "runs": 40,
-      "median_ms": 16.879,
-      "p95_ms": 19.133
+      "median_ms": 16.367,
+      "p95_ms": 21.152
     }
   }
 }
