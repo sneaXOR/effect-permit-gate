@@ -61,33 +61,48 @@ def start_service(command_for_port) -> tuple[int, subprocess.Popen]:
     raise RuntimeError("could not start service after five attempts: " + " | ".join(errors))
 
 
+def stop_service(process: subprocess.Popen | None) -> None:
+    if process is None:
+        return
+    if process.poll() is None:
+        process.terminate()
+        process.wait(timeout=3)
+    if process.stderr:
+        process.stderr.close()
+
+
 class Lab:
     def __init__(self, mode: str, revision: str = REVISION):
         self.mode = mode
         self.temp = tempfile.TemporaryDirectory(prefix="effect-permit-", ignore_cleanup_errors=True)
-        self.policy_port, self.policy = start_service(
-            lambda port: [sys.executable, str(Path(__file__).with_name("policy_service.py")), "--port", str(port), "--revision", REVISION, "--audience", AUDIENCE]
-        )
-        _, key = http_json("GET", f"http://127.0.0.1:{self.policy_port}/public-key")
-        self.effect_port, self.effect = start_service(
-            lambda port: [
-                sys.executable,
-                str(Path(__file__).with_name("effect_service.py")),
-                "--port", str(port),
-                "--database", str(Path(self.temp.name) / "effects.sqlite"),
-                "--mode", mode,
-                "--public-key", key["public_key"],
-                "--revision", revision,
-                "--audience", AUDIENCE,
-            ]
-        )
+        self.policy = None
+        self.effect = None
+        try:
+            self.policy_port, self.policy = start_service(
+                lambda port: [sys.executable, str(Path(__file__).with_name("policy_service.py")), "--port", str(port), "--revision", REVISION, "--audience", AUDIENCE]
+            )
+            _, key = http_json("GET", f"http://127.0.0.1:{self.policy_port}/public-key")
+            self.effect_port, self.effect = start_service(
+                lambda port: [
+                    sys.executable,
+                    str(Path(__file__).with_name("effect_service.py")),
+                    "--port", str(port),
+                    "--database", str(Path(self.temp.name) / "effects.sqlite"),
+                    "--mode", mode,
+                    f"--public-key={key['public_key']}",
+                    "--revision", revision,
+                    "--audience", AUDIENCE,
+                ]
+            )
+        except BaseException:
+            stop_service(self.effect)
+            stop_service(self.policy)
+            self.temp.cleanup()
+            raise
 
     def close(self) -> None:
-        for process in (self.effect, self.policy):
-            process.terminate()
-            process.wait(timeout=3)
-            if process.stderr:
-                process.stderr.close()
+        stop_service(self.effect)
+        stop_service(self.policy)
         self.temp.cleanup()
 
     def authorize(self, arguments: dict = SAFE_ARGS, ttl_ms: int = 5000) -> tuple[int, dict]:
