@@ -1,6 +1,8 @@
-# One approval, one exact effect
+# Verifying an agent approval at the service that executes it
 
-An AI agent gets approval to pay **€100**, then a faulty or compromised host changes the amount, reuses the approval, or sends it 16 times at once. The baseline tool service trusts the host that called it. This reference gate makes the tool service verify the approval itself before it changes state.
+This repository tests one narrow question: after a policy approves an agent tool call, can the service that changes state verify that it is still the approved call and avoid applying it twice?
+
+The example is a payment approved for **€100**. A faulty or compromised adapter then changes the request, presents an invalid approval, or retries the request. The receiving service verifies the approval before recording the payment.
 
 The approval is a signed, single-effect permit that binds a principal label, destination service, tool version, arguments, policy revision, and expiry time. Change any of them and the action is refused. Retry the identical action and the service returns the original effect reference without paying twice. The principal label is a signed claim, not proof of a human or workload identity.
 
@@ -10,12 +12,10 @@ The same ten control and attack cases ran against both designs:
 
 | Design | Attack classes reaching a bad effect | 16 concurrent attempts |
 |---|---:|---:|
-| Effect service trusts a faulty/compromised adapter | 9/9 | 16 effects |
+| Deliberately unguarded effect service | 9/9 | 16 effects |
 | Effect service verifies the permit | 0/9 | 1 effect |
 
-The raw matrix records 23 unauthorized or duplicate effects in the trust-adapter baseline and zero behind the gate. That total is not the headline and is not a prevalence estimate: 15 come from the deliberately chosen 16-way retry. The invariant result is that all nine attack classes reached a bad effect in the baseline and none did behind the gate.
-
-The three legitimate effects still complete: the original approved action, one sequential retry, and one winner from the 16-way concurrent retry. Identical retries receive the same `effect_id`; the transport metadata differs, but no second effect is created.
+The unguarded service is a negative control, not AgentWarden or a modern IAM baseline. The nine classes cover a missing permit, changed arguments, sequential and concurrent retries, expiry, forgery, a different principal label, a different tool version, and a stale policy revision. Identical permitted retries receive the same `effect_id`; no second effect is created.
 
 The canonical JSON also records median and p95 latency for 40 allowed actions in each design. These single-host timings expose the cost; they are not a universal overhead claim.
 
