@@ -1,10 +1,8 @@
-# Verifying an agent approval at the service that executes it
+# Bind an agent approval to the action that executes
 
-This repository tests one narrow question: after a policy approves an agent tool call, can the service that changes state verify that it is still the approved call and avoid applying it twice?
+An agent runtime can ask a policy service whether a tool call is allowed, then execute that call somewhere else. Between those two steps, arguments can change and transports can retry. This repository makes the service that changes state accept only the exact action that policy approved and treat identical retries as one effect.
 
-The example is a payment approved for **€100**. A faulty or compromised adapter then changes the request, presents an invalid approval, or retries the request. The receiving service verifies the approval before recording the payment.
-
-The approval is a signed, single-effect permit that binds a principal label, destination service, tool version, arguments, policy revision, and expiry time. Change any of them and the action is refused. Retry the identical action and the service returns the original effect reference without paying twice. The principal label is a signed claim, not proof of a human or workload identity.
+The policy service returns a signed, single-effect permit bound to the caller label, destination service, tool version, arguments, policy revision, and expiry. The effect service verifies those fields and records the permit use atomically with the state change. A small payment command is the test fixture; the contract applies to state-changing tools generally.
 
 ## Result
 
